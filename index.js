@@ -18,6 +18,7 @@ const DEBUG = process.env.DEBUG === 'true';
 const ENABLE_MENTIONS = process.env.ENABLE_MENTIONS === 'true';
 const ENABLE_SEMANTIC_SEARCH = process.env.ENABLE_SEMANTIC_SEARCH === 'true';
 const ENABLE_DATABASE = process.env.ENABLE_DATABASE === 'true';
+const FRIENDLY_FIRE = process.env.FRIENDLY_FIRE === 'true';
 
 const START_TIME = Date.now();
 let lastResponseTime = 0;
@@ -187,7 +188,9 @@ client.once('ready', async () => {
 });
 
 client.on('messageCreate', async (message) => {
-    if (message.author.bot) return;
+    // Allow bot messages only when FRIENDLY_FIRE is enabled.
+    // This reduces the risk of infinite bot-to-bot loops by default.
+    if (message.author.bot && !FRIENDLY_FIRE) return;
 
     const isCorrectChannel = message.channel.id === CHANNEL_ID;
     const isMentioned = message.mentions.has(client.user);
@@ -244,7 +247,8 @@ client.on('messageCreate', async (message) => {
 });
 
 client.on('messageCreate', async (message) => {
-    if (message.author.bot) return;
+    // Allow bot messages for commands only when FRIENDLY_FIRE is enabled.
+    if (message.author.bot && !FRIENDLY_FIRE) return;
     
     const isCorrectChannel = message.channel.id === CHANNEL_ID;
     const isMentioned = message.mentions.has(client.user);
