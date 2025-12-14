@@ -188,9 +188,7 @@ client.once('ready', async () => {
 });
 
 client.on('messageCreate', async (message) => {
-    // Allow bot messages only when FRIENDLY_FIRE is enabled.
-    // This reduces the risk of infinite bot-to-bot loops by default.
-    if (message.author.bot && !FRIENDLY_FIRE) return;
+    if (!shouldProcessMessage(message)) return;
 
     const isCorrectChannel = message.channel.id === CHANNEL_ID;
     const isMentioned = message.mentions.has(client.user);
@@ -247,8 +245,7 @@ client.on('messageCreate', async (message) => {
 });
 
 client.on('messageCreate', async (message) => {
-    // Allow bot messages for commands only when FRIENDLY_FIRE is enabled.
-    if (message.author.bot && !FRIENDLY_FIRE) return;
+    if (!shouldProcessMessage(message)) return;
     
     const isCorrectChannel = message.channel.id === CHANNEL_ID;
     const isMentioned = message.mentions.has(client.user);
@@ -321,3 +318,23 @@ client.login(DISCORD_TOKEN).catch(err => {
     console.error(' Bot failed to start:', err);
     process.exit(1);
 });
+
+// Determine whether to process an incoming message
+function shouldProcessMessage(message) {
+    // Never respond to our own messages
+    if (message.author.id === client.user?.id) {
+        if (DEBUG) console.log('DEBUG: Ignoring own message');
+        return false;
+    }
+
+    // If author is a bot, only process when FRIENDLY_FIRE is enabled
+    if (message.author.bot) {
+        if (!FRIENDLY_FIRE) {
+            if (DEBUG) console.log(`DEBUG: Ignoring bot message from ${message.author.tag} (FRIENDLY_FIRE off)`);
+            return false;
+        }
+        if (DEBUG) console.log(`DEBUG: Processing bot message from ${message.author.tag} (FRIENDLY_FIRE on)`);
+    }
+
+    return true;
+}
